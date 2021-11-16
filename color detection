@@ -1,0 +1,74 @@
+#importing pandas library for reading csv files
+#importing opencv library for reading the images
+
+import cv2
+import pandas as pd
+
+#reads image
+img=cv2.imread('picture.jpg')
+
+#csv file doesn't consist any indexes so iam manually indexing
+index=["color","color_name","hex","R","G","B"]
+
+#reading colors csv file
+csv=pd.read_csv('color_detection.csv',names=index,header=None)
+
+#asigning RGB values a name.there are R255*G255*B255 colors. but in this csv file we are having only 865 colors.
+
+def getColorName(R,G,B):
+    minimum = 1000
+    for i in range(len(csv)):
+        d = abs(R- int(csv.loc[i,"R"])) + abs(G- int(csv.loc[i,"G"]))+ abs(B- int(csv.loc[i,"B"]))
+        if(d<minimum):
+            minimum = d
+            color_name = csv.loc[i,"color_name"]
+    return color_name
+    
+    #if user clicks on the image then only it give the coordinates where(xpos,ypos) user clicks and gives RGB pixel values 
+
+clicked = False
+r = g = b = xpos = ypos = 0
+
+#creating call back funtion that monitors moment of the mouse and accepts only if left mouse button is double clicked
+
+def draw_function(event, x,y,flags,param):
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        global b,g,r,xpos,ypos, clicked
+        clicked = True
+        xpos = x
+        ypos = y
+        b,g,r = img[y,x]
+        b = int(b)
+        g = int(g)
+        r = int(r)
+        
+        #creating a window for image for setting a call back function for the mouse event
+
+cv2.namedWindow('color detection')
+cv2.setMouseCallback('color detection',draw_function)
+
+#using cv2.imshow funtion we can show image on the window we have created before
+#cv2.rectangle draws a rectangle of mentioned color of thickness -1px
+#cv2.putText displays color_name on image window
+
+while(1):
+    
+    cv2.imshow("color detection",img)
+    if (clicked):
+         
+        cv2.rectangle(img,(20,20), (750,60), (b,g,r), -1)
+        color_name = getColorName(r,g,b) + ' R='+ str(r) +  ' G='+ str(g) +  ' B='+ str(b)
+        
+        cv2.putText(img, color_name,(50,50),2,0.8,(255,255,255),2,cv2.LINE_AA)
+
+#for light colors text will be displayed in black        
+        if(r+g+b>=600):
+            cv2.putText(img, color_name,(50,50),2,0.8,(0,0,0),2,cv2.LINE_AA)
+            
+        clicked=False
+        
+#waitKey() will display a frame for atleast certain derived time.
+    if cv2.waitKey(20) & 0xFF ==27:
+        break
+#cv2.destroyAllWindows() to close all the windows opened before so you can open a new window        
+cv2.destroyAllWindows()
